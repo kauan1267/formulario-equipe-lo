@@ -1,114 +1,77 @@
-const form = document.getElementById('logForm');
-const screens = [...document.querySelectorAll('.screen')];
-const timerEl = document.getElementById('timer');
-const bar = document.getElementById('bar');
-let current = 0;
-let timeLeft = 24 * 60; // 24 minutes in seconds
-const totalScreens = screens.length;
+const formSlides = document.querySelectorAll(".form-slide");
+const nextBtn = document.getElementById("nextBtn");
+const prevBtn = document.getElementById("prevBtn");
+const submitBtn = document.getElementById("submitBtn");
+const progress = document.getElementById("progress");
+const timerEl = document.getElementById("timer");
 
-// Show initial screen
-screens[current].classList.add('active');
-updateProgressBar();
+let currentSlide = 0;
+let totalSlides = formSlides.length;
+let timeLeft = 1440; // 24 minutos
+let ctrlBlocked = false;
 
-function updateProgressBar() {
-  const progressPercent = ((current + 1) / totalScreens) * 100;
-  bar.style.width = progressPercent + '%';
-}
-
-// Show screen by index
-function showScreen(index) {
-  if (index < 0 || index >= totalScreens) return;
-  screens[current].classList.remove('active');
-  current = index;
-  screens[current].classList.add('active');
-  updateProgressBar();
-}
-
-// Next and Previous buttons
-document.querySelectorAll('.next').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (!validateScreen(current)) return;
-    showScreen(current + 1);
-    if (current >= 1) {
-      enableCopyPasteBlock();
-    }
-  });
-});
-document.querySelectorAll('.prev').forEach(btn => {
-  btn.addEventListener('click', () => {
-    showScreen(current - 1);
-  });
-});
-
-// Validate all inputs in current screen
-function validateScreen(screenIndex) {
-  const inputs = screens[screenIndex].querySelectorAll('input,textarea');
-  for (const input of inputs) {
-    if (!input.checkValidity()) {
-      input.reportValidity();
-      return false;
-    }
-  }
-  return true;
-}
-
-// Timer countdown
-const interval = setInterval(() => {
+// Timer
+const timerInterval = setInterval(() => {
   timeLeft--;
-  if (timeLeft < 0) {
-    clearInterval(interval);
-    alert('O tempo acabou! O formulário será enviado automaticamente.');
-    submitForm();
-    return;
-  }
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const seconds = String(timeLeft % 60).padStart(2, '0');
   timerEl.textContent = `${minutes}:${seconds}`;
+
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    alert("Tempo esgotado!");
+    document.getElementById("logForm").submit();
+  }
 }, 1000);
 
-// Block Ctrl+C / Ctrl+V from screen 2 on
-function enableCopyPasteBlock() {
-  document.addEventListener('keydown', blockCopyPaste);
-}
-function blockCopyPaste(e) {
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v')) {
-    e.preventDefault();
+// Navegação
+function showSlide(n) {
+  formSlides[currentSlide].classList.remove("active");
+  currentSlide = n;
+  formSlides[currentSlide].classList.add("active");
+
+  // progress bar
+  progress.style.width = ((currentSlide + 1) / totalSlides) * 100 + "%";
+
+  // Botões
+  prevBtn.style.display = currentSlide === 0 ? "none" : "inline-block";
+  nextBtn.style.display = currentSlide === totalSlides - 1 ? "none" : "inline-block";
+  submitBtn.style.display = currentSlide === totalSlides - 1 ? "inline-block" : "none";
+
+  // Bloquear Ctrl+C e Ctrl+V após 2ª pergunta
+  if (currentSlide >= 1 && !ctrlBlocked) {
+    ctrlBlocked = true;
+    document.addEventListener("copy", e => e.preventDefault());
+    document.addEventListener("paste", e => e.preventDefault());
   }
 }
+showSlide(0);
 
-// Prevent copy/paste via context menu
-form.addEventListener('copy', e => {
-  if (current >= 1) e.preventDefault();
+nextBtn.addEventListener("click", () => {
+  if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
 });
-form.addEventListener('paste', e => {
-  if (current >= 1) e.preventDefault();
+prevBtn.addEventListener("click", () => {
+  if (currentSlide > 0) showSlide(currentSlide - 1);
 });
 
-// Form submit
-form.addEventListener('submit', e => {
+// Enviar para o webhook
+document.getElementById("logForm").addEventListener("submit", async function (e) {
   e.preventDefault();
-  if (!validateScreen(current)) return;
-  clearInterval(interval);
-  submitForm();
-});
+  const data = new FormData(this);
+  let message = "**📋 Formulário LOG enviado!**\n\n";
+  let count = 1;
 
-function submitForm() {
-  const formData = new FormData(form);
-  const dataObj = {};
-  for (const [key, val] of formData.entries()) {
-    dataObj[key] = val.trim();
+  for (let [key, value] of data.entries()) {
+    message += `**${count}.** ${value}\n`;
+    count++;
   }
 
-  const content = `**Formulário Equipe LOG enviado:**\n\n` +
-    Object.entries(dataObj)
-      .map(([key, val]) => `**${key}**: ${val}`)
-      .join('\n');
+  await fetch("https://discord.com/api/webhooks/1397640296698740826/UJqim4Wfp-MZyAkRGy9f4YacQLac5yeeDxWaFl3TzucovKWS3ga44ChNrtRGFqdd5p9N", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: message })
+  });
 
-  fetch('https://discord.com/api/webhooks/1397640296698740826/UJqim4Wfp-MZyAkRGy9f4YacQLac5yeeDxWaFl3TzucovKWS3ga44ChNrtRGFqdd5p9N', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content })
-  })
-  .then(res => {
-    if (res.ok) {
-      alert('Formulário enviado
+  alert("✅ Formulário enviado com sucesso!");
+  location.reload();
+});
