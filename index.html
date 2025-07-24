@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário - Equipe LOG</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 Formulário da Equipe LOG</h1>
+      <p>Desenvolvido por 77sombrax</p>
+    </header>
+
+    <main>
+      <form id="formulario">
+        <!-- Indicador de progresso -->
+        <div id="progresso-container">
+          <div id="progresso" style="width: 0%;"></div>
+        </div>
+
+        <!-- Perguntas -->
+        <div class="pergunta ativa">
+          <label for="nome_id">1. Nome + ID Discord</label>
+          <input type="text" id="nome_id" name="nome_id" required>
+        </div>
+
+        <div class="pergunta">
+          <label for="horario">2. Qual seu horário disponível pra ajudar na LOG?</label>
+          <input type="text" id="horario" name="horario" required>
+        </div>
+
+        <div class="pergunta">
+          <label for="areas_staff">3. Atua em alguma área da staff? Se sim, quais?</label>
+          <input type="text" id="areas_staff" name="areas_staff" required>
+        </div>
+
+        <div class="pergunta">
+          <label for="experiencia_log">4. Já teve experiência como Equipe LOG? Se sim, me diga mais sobre.</label>
+          <textarea id="experiencia_log" name="experiencia_log" rows="4" required></textarea>
+        </div>
+
+        <!-- Botões de navegação -->
+        <div class="botoes">
+          <button type="button" id="voltar" class="btn" disabled>Voltar</button>
+          <button type="button" id="avancar" class="btn">Avançar</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <!-- Mensagem final -->
+  <div id="mensagem-final" class="oculto">
+    <h2>Formulário Enviado! 🎉</h2>
+    <p>Parabéns por concluir o formulário. Lembre-se, não é permitido colar respostas e, caso descobrirmos, o formulário será desconsiderado.</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
